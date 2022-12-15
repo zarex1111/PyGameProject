@@ -1,0 +1,2 @@
+FPS = 40
+ACTIVE_ROWS = int(1000.0 / FPS)
