@@ -33,9 +33,9 @@ def open_choosing_night_menu():
 
 
 def menu_buttons_array(screen):
-    start_game_button = Button(screen, WIDTH / 2 - 250, HEIGHT / 2 - 200, 500, 100, 0, text='Начать игру',
-        textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 50, 200), onClick=open_choosing_night_menu, colour=(0, 0, 0), radius=50)
-    godmode_button = Button(screen, WIDTH / 2 - 250, HEIGHT / 2 - 50, 500, 100, 0, text='Godmode',
+    start_game_button = Button(screen, WIDTH / 2 - 250, HEIGHT / 2 + 50, 500, 100, 0, text='Начать игру',
+        textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 10, 200), onClick=open_choosing_night_menu, colour=(0, 0, 0), radius=50)
+    godmode_button = Button(screen, WIDTH / 2 - 250, HEIGHT / 2 + 200, 500, 100, 0, text='Godmode',
         textColour=(255, 255, 255), fontSize=50, hoverColour=(255, 100, 100), onClick=reedit_godmode, colour=(0, 0, 0), radius=50)
     return [start_game_button, godmode_button]
 
@@ -56,10 +56,10 @@ def choose_night_menu_buttons_array(screen):
     array = []
     for i in range(5):
         button = Button(screen, start_x + i * 275, y, 200, 300, 0, text=f'Ночь {i + 1}',
-            textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 50, 200), colour=(0, 0, 0), radius=25)
+            textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 10, 200), colour=(0, 0, 0), radius=25)
         array.append(button)
     button = Button(screen, WIDTH / 2 - 250, HEIGHT / 2 - 200, 500, 100, 0, text='Назад в главное меню', onClick=open_main_menu,
-        textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 50, 200), colour=(0, 0, 0), radius=50)
+        textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 10, 200), colour=(0, 0, 0), radius=50)
     array.append(button)
     return array
 
@@ -79,6 +79,8 @@ if __name__ == '__main__':
 
     screen = pygame.display.set_mode(SCREEN_SIZE)
     pygame.display.set_caption('Игра')
+    logo = pygame.image.load('data/png/logo.png')
+    pygame.display.set_icon(logo)
     
     running = True
     clock = pygame.time.Clock()
@@ -109,6 +111,8 @@ if __name__ == '__main__':
         screen.fill((0, 0, 0))
         if in_menu or in_choosing_game_menu:
             screen.blit(background, (0, 0))
+        if in_menu:
+            screen.blit(logo, (WIDTH / 2 - 150, HEIGHT / 2 - 300))
 
         pygame_widgets.update(pygame.event.get())
 
