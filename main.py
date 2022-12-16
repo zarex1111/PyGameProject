@@ -75,6 +75,7 @@ def open_main_menu():
 if __name__ == '__main__':
     print(SCREEN_SIZE)
     pygame.init()
+    pygame.mouse.set_visible(False)
 
     screen = pygame.display.set_mode(SCREEN_SIZE)
     pygame.display.set_caption('Игра')
@@ -92,6 +93,12 @@ if __name__ == '__main__':
     choose_game_menu = Menu(screen, choose_night_menu_buttons_array(screen))
     choose_game_menu.hide()
 
+    cursor_group = pygame.sprite.Group()
+    cursor = pygame.sprite.Sprite(cursor_group)
+    cursor.image = pygame.image.load('data/png/arrow.png')
+    cursor.image.convert_alpha()
+    cursor.image = pygame.transform.scale(cursor.image, (50, 75))
+
     background = pygame.image.load('data/png/background.png')
 
     while running:
@@ -104,5 +111,12 @@ if __name__ == '__main__':
             screen.blit(background, (0, 0))
 
         pygame_widgets.update(pygame.event.get())
+
+        if pygame.mouse.get_focused():
+            cursor_pos = pygame.mouse.get_pos()
+
+            cursor.rect = cursor.image.get_rect()
+            cursor.rect.x, cursor.rect.y = cursor_pos
+            cursor_group.draw(screen)
 
         clock.tick(FPS)
