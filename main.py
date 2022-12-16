@@ -63,6 +63,7 @@ def choose_night_menu_buttons_array(screen):
     array.append(button)
     return array
 
+
 def open_main_menu():
     global in_menu, in_choosing_game_menu, in_game, choose_game_menu, main_menu
     in_menu, in_choosing_game_menu, in_game = True, False, False
