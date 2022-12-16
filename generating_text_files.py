@@ -6,8 +6,11 @@ from pygame import mixer_music
 if __name__ == '__main__':
     filename = input()
     with open(f'data/txt/{filename}.txt', 'w') as file:
-        file.writelines('0' * 8 for _ in range(ACTIVE_ROWS))
+        file.writelines(['0' * 8 for _ in range(ACTIVE_ROWS)])
         pygame.init()
+
+        screen = pygame.display.set_mode((300, 300))
+        pygame.display.flip()
 
         running = True
         clock = pygame.time.Clock()
@@ -24,5 +27,8 @@ if __name__ == '__main__':
                     running = False
             if mixer_music.get_busy():
                 pressed_keys = pygame.key.get_pressed()
-                line = list(map(lambda x: x in pressed_keys, keys))
-                print(line)
+                line = ''
+                for key in keys:
+                    line += str(int(pressed_keys[key]))
+                file.writelines([line])
+            clock.tick(FPS)
