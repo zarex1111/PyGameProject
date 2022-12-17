@@ -106,6 +106,8 @@ if __name__ == '__main__':
 
     background = pygame.image.load('data/png/background.png')
 
+    active_area1, active_area2 = ActiveArea
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
