@@ -52,7 +52,6 @@ def reedit_godmode():
     global GODMODE
     GODMODE = not GODMODE
 
-    print(main_menu.buttons[1].text)
     if GODMODE:
         main_menu.buttons[1].setHoverColour((20, 200, 20))
     else:
@@ -80,7 +79,6 @@ def open_main_menu():
 
 
 if __name__ == '__main__':
-    print(SCREEN_SIZE)
     pygame.init()
     pygame.mouse.set_visible(False)
 
@@ -105,8 +103,6 @@ if __name__ == '__main__':
     cursor_group = pygame.sprite.Group()
     cursor = pygame.sprite.Sprite(cursor_group)
     cursor.image = pygame.image.load('data/png/arrow.png')
-    cursor.image.convert_alpha()
-    cursor.image = pygame.transform.scale(cursor.image, (50, 75))
 
     background = pygame.image.load('data/png/background.png')
 
