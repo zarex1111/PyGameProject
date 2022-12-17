@@ -25,6 +25,14 @@ class Menu:
             btn.show()
 
 
+class ActiveArea:
+
+    def __init__(self, first_scene):
+        self.current_scene = first_scene
+        self.width, self.height = ACTIVE_AREA_WIDTH, ACTIVE_AREA_HEIGHT
+        self.arrows = pygame.sprite.Group()
+
+
 def open_choosing_night_menu():
     global in_menu, in_choosing_game_menu, in_game, choose_game_menu, main_menu
     in_menu, in_choosing_game_menu, in_game = False, True, False
@@ -69,7 +77,6 @@ def open_main_menu():
     in_menu, in_choosing_game_menu, in_game = True, False, False
     choose_game_menu.hide()
     main_menu.show()
-
 
 
 if __name__ == '__main__':
