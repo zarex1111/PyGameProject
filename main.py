@@ -39,9 +39,9 @@ class ActiveArea:
         self.arrows = pygame.sprite.Group()
         for i in range(len(self.current_scene)):
             if self.current_scene[i] == '1':
-                row, col = i // 8, i % 8
+                row, col = i // 4, i % 4
                 x = row * 50 + (row - 1) * 25
-                y = 200 + col * 25 + (col - 1) * 7 + current_night.areas.index(self) * 500
+                y = 200 + col * 50 + (col - 1) * 7 + current_night.areas.index(self) * 500
                 Arrow(y, x, self.arrows)
 
     def draw(self):
@@ -93,7 +93,6 @@ class Night:
     def draw(self):
         for area in self.areas:
             area.draw()
-
 
 
 def open_choosing_night_menu():
