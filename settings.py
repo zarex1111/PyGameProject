@@ -9,3 +9,5 @@ VERTICAL_SPACING = 7
 SCREEN_SIZE = (200 + ACTIVE_AREA_WIDTH * 2 + BETWEEN_AREAS_SPACING,
     ACTIVE_AREA_HEIGHT)
 WIDTH, HEIGHT = SCREEN_SIZE
+
+NIGHT_CODES = {1: 'whiplash', 2: 'american-idiot', 3: 'psycho', 4: 'battle-without-honor-or-humanity'}

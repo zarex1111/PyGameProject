@@ -30,7 +30,70 @@ class ActiveArea:
     def __init__(self, first_scene):
         self.current_scene = first_scene
         self.width, self.height = ACTIVE_AREA_WIDTH, ACTIVE_AREA_HEIGHT
+
+    def __add__(self, scene):
+        self.current_scene = self.current_scene[4:] + scene
+        return self
+
+    def update(self):
         self.arrows = pygame.sprite.Group()
+        for i in range(len(self.current_scene)):
+            if self.current_scene[i] == '1':
+                row, col = i // 8, i % 8
+                x = row * 50 + (row - 1) * 25
+                y = 200 + col * 25 + (col - 1) * 7 + current_night.areas.index(self) * 500
+                Arrow(y, x, self.arrows)
+
+    def draw(self):
+        self.arrows.draw(screen)
+
+
+class Arrow(pygame.sprite.Sprite):
+    image = pygame.image.load('data/png/vertical_arrow.png')
+
+    def __init__(self, pos_x, pos_y, *group):
+        super().__init__(*group)
+        self.image = Arrow.image
+        self.rect = self.image.get_rect()
+        self.rect.x = pos_x
+        self.rect.y = pos_y
+
+
+class Night:
+
+    def __init__(self, night_number):
+
+        self.sound = NIGHT_CODES[night_number]
+        pygame.mixer.music.load(f'data/music/{self.sound}.wav')
+        pygame.mixer.music.play()
+        self.txt_file = open(f'data/txt/{self.sound}.txt')
+        self.background = pygame.image.load(f'data/png/night_{night_number}.png')
+
+        first_scenes = self._read_full_scene()
+        self.areas = [ActiveArea(first_scenes[0]), ActiveArea(first_scenes[1])]
+
+    def _read_full_scene(self):
+
+        scene1, scene2 = '', ''
+        for i in range(ACTIVE_ROWS):
+            scene1, scene2 = self.add_one_row(scene1, scene2)
+        return(scene1, scene2)
+        
+    def add_one_row(self, scene1, scene2):
+        scene1 += self.txt_file.read(4)
+        scene2 += self.txt_file.read(4)
+        return (scene1, scene2)
+    
+    def update(self):
+        scenes = self.add_one_row('', '')
+        self.areas = [self.areas[0] + scenes[0], self.areas[1] + scenes[1]]
+        for area in self.areas:
+            area.update()
+
+    def draw(self):
+        for area in self.areas:
+            area.draw()
+
 
 
 def open_choosing_night_menu():
@@ -64,11 +127,21 @@ def choose_night_menu_buttons_array(screen):
     for i in range(5):
         button = Button(screen, start_x + i * 275, y, 200, 300, 0, text=f'Ночь {i + 1}',
             textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 10, 200), colour=(0, 0, 0), radius=25)
+        button.setOnClick(start_night, (button.getX(),))
         array.append(button)
     button = Button(screen, WIDTH / 2 - 250, HEIGHT / 2 - 200, 500, 100, 0, text='Назад в главное меню', onClick=open_main_menu,
         textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 10, 200), colour=(0, 0, 0), radius=50)
     array.append(button)
     return array
+
+
+def start_night(night_number):
+    global in_menu, in_choosing_game_menu, in_game, current_night, choose_game_menu
+
+    night_number = (night_number - 100) // 275 + 1
+    in_menu, in_choosing_game_menu, in_game = False, False, True
+    choose_game_menu.hide()
+    current_night = Night(night_number)
 
 
 def open_main_menu():
@@ -106,18 +179,25 @@ if __name__ == '__main__':
 
     background = pygame.image.load('data/png/background.png')
 
-    active_area1, active_area2 = ActiveArea
+    current_night = None
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+        if in_game:
+            current_night.update()
+
         pygame.display.flip()
         screen.fill((0, 0, 0))
         if in_menu or in_choosing_game_menu:
             screen.blit(background, (0, 0))
         if in_menu:
             screen.blit(logo, (WIDTH / 2 - 150, HEIGHT / 2 - 300))
+        if in_game:
+            screen.blit(current_night.background, (0, 0))
+            current_night.draw()
 
         pygame_widgets.update(pygame.event.get())
 
