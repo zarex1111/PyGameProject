@@ -40,20 +40,23 @@ class ActiveArea:
         for i in range(len(self.current_scene)):
             if self.current_scene[i] == '1':
                 row, col = i // 4, i % 4
-                x = row * 50 + (row - 1) * 25
-                y = 200 + col * 50 + (col - 1) * 7 + current_night.areas.index(self) * 500
-                Arrow(y, x, self.arrows)
+                x = row * 32
+                y = 100 + col * 125 + current_night.areas.index(self) * 500
+                Arrow(y, x, row, col, self.current_scene, self.arrows)
 
     def draw(self):
         self.arrows.draw(screen)
 
 
 class Arrow(pygame.sprite.Sprite):
-    image = pygame.image.load('data/png/vertical_arrow.png')
+    images = ('data/png/right_arrow.png', 'data/png/up_arrow.png',
+        'data/png/left_arrow.png', 'data/png/down_arrow.png')
+    line_images = ('data/png/right_arrow_line.png', 'data/png/up_arrow_line.png',
+        'data/png/left_arrow_line.png', 'data/png/down_arrow_line.png')
 
-    def __init__(self, pos_x, pos_y, *group):
+    def __init__(self, pos_x, pos_y, row, col, scene, *group):
         super().__init__(*group)
-        self.image = Arrow.image
+        self.image = pygame.image.load(Arrow.line_images[col]).convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
@@ -94,12 +97,6 @@ class Night:
         for area in self.areas:
             area.draw()
 
-
-def open_choosing_night_menu():
-    global in_menu, in_choosing_game_menu, in_game, choose_game_menu, main_menu
-    in_menu, in_choosing_game_menu, in_game = False, True, False
-    choose_game_menu.show()
-    main_menu.hide()
 
 
 def menu_buttons_array(screen):
@@ -148,6 +145,13 @@ def open_main_menu():
     in_menu, in_choosing_game_menu, in_game = True, False, False
     choose_game_menu.hide()
     main_menu.show()
+
+
+def open_choosing_night_menu():
+    global in_menu, in_choosing_game_menu, in_game, choose_game_menu, main_menu
+    in_menu, in_choosing_game_menu, in_game = False, True, False
+    choose_game_menu.show()
+    main_menu.hide()
 
 
 if __name__ == '__main__':
