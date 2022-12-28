@@ -10,3 +10,5 @@ print(SCREEN_SIZE)
 WIDTH, HEIGHT = SCREEN_SIZE
 
 NIGHT_CODES = {1: 'whiplash', 2: 'american-idiot', 3: 'psycho', 4: 'battle-without-honor-or-humanity', 5: 'do-you-really-wanna-taste-it'}
+
+SIDES = ('right', 'up', 'left', 'downW')

@@ -4,6 +4,43 @@ from pygame_widgets.button import Button
 import pygame_widgets
 
 
+class AnimatedSprite(pygame.sprite.Sprite):
+    def __init__(self, cadres_code, cadres_number, *group):
+        super().__init__(*group)
+        self.cadres_info = (cadres_code, cadres_number)
+
+class Figure(AnimatedSprite):
+
+    def __init__(self, x, y, cadre_code, cadre_number, *group):
+        super().__init__(cadre_code, cadre_number, *group)
+        self.cadres = []
+        for i in range(self.cadre_number):
+            self.cadres.append(f'data/png/{cadre_code}_{i + 1}.png')
+        self.passive_update()
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+
+    def passive_update(self):
+        self.cadres = [self.cadres[-1]] + self.cadres[1:]
+        self.image = pygame.image.load(self.cadres[0])
+
+
+class ControlledHero(Figure):
+    
+    def update(self, events):
+        keys = [pygame.K_RIGHT, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN]
+        for i in range(len(keys)):
+            if events[keys[i]]:
+                self.image = pygame.image.load(f'data/png/{self.cadres_info[0]}_{SIDES[i]}.png')
+
+
+class Bot(Figure):
+    
+    def __init__(self, x, y, cadre_code, cadre_number, hardless, *group):
+        super().__init__(x, y, cadre_code, cadre_number, *group)
+        self.hard = hardless
+
+
 class Menu:
 
     def __init__(self, screen, buttons_tuple):
