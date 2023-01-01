@@ -36,6 +36,7 @@ class ControlledHero(Figure):
         for i in range(len(keys)):
             if events[keys[i]]:
                 self.image = pygame.image.load(f'data/png/figure_{self.cadres_info[0]}_{SIDES[i]}.png')
+                detectors_group.sprites()[i + 4].activate()
 
 
 class Bot(Figure):
@@ -86,7 +87,7 @@ class ActiveArea:
                 row, col = i // 4, i % 4
                 x = row * 32
                 y = 100 + col * 125 + current_night.areas.index(self) * 500
-                Arrow(y, x, row, col, self.current_scene, self.arrows)
+                Arrow(y, x, row, col, self.current_scene, current_night.areas.index(self), self.arrows)
 
     def draw(self):
         self.arrows.draw(screen)
@@ -98,12 +99,45 @@ class Arrow(pygame.sprite.Sprite):
     line_images = ('data/png/right_arrow_line.png', 'data/png/up_arrow_line.png',
         'data/png/left_arrow_line.png', 'data/png/down_arrow_line.png')
 
-    def __init__(self, pos_x, pos_y, row, col, scene, *group):
+    def __init__(self, pos_x, pos_y, row, col, scene, area_index, *group):
         super().__init__(*group)
         self.image = pygame.image.load(Arrow.line_images[col]).convert_alpha()
+        self.area_index = area_index
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
+
+
+class TouchableDetector(pygame.sprite.Sprite):
+
+    activated_image = pygame.image.load('data/png/detector_activated.png')
+    deactivated_image = pygame.image.load('data/png/detector_deactivated.png')
+
+    def __init__(self, position, *groups):
+        super().__init__(*groups)
+        self.activated = False
+        self.position = position
+
+        self.update_rect()
+
+    def activate(self):
+        self.activated = True
+        self.update_rect()
+
+    def deactivate(self):
+        self.activated = False
+        self.update_rect()
+
+    def update_rect(self):
+        self.image = TouchableDetector.deactivated_image
+        if self.activated:
+            self.image = TouchableDetector.activated_image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.position
+    
+    def update(self):
+        self.deactivate()
+
 
 
 class Night:
@@ -176,7 +210,7 @@ def choose_night_menu_buttons_array(screen):
 
 
 def start_night(night_number):
-    global in_menu, in_choosing_game_menu, in_game, current_night, choose_game_menu, current_bot, current_hero, figures_sprite_group
+    global in_menu, in_choosing_game_menu, in_game, current_night, choose_game_menu, current_bot, current_hero, figures_sprite_group, detectors_group
 
     night_number = (night_number - 100) // 275 + 1
     in_menu, in_choosing_game_menu, in_game = False, False, True
@@ -184,6 +218,10 @@ def start_night(night_number):
     current_night = Night(night_number)
 
     hero, bot = ControlledHero(1000, 500, 1, 2, figures_sprite_group), Bot(300, 500, 2, 2, 50, figures_sprite_group)
+
+    for i in range(8):
+        x = 100 + (i % 4) * 125 + (i > 3) * 500
+        TouchableDetector((x, 50), detectors_group)
 
 
 def open_main_menu():
@@ -232,6 +270,7 @@ if __name__ == '__main__':
     current_hero = None
     current_bot = None
     figures_sprite_group = pygame.sprite.Group()
+    detectors_group = pygame.sprite.Group()
 
     while running:
         for event in pygame.event.get():
@@ -240,7 +279,14 @@ if __name__ == '__main__':
 
         if in_game:
             current_night.update()
+            detectors_group.update()
             figures_sprite_group.update(pygame.key.get_pressed())
+
+            collides = pygame.sprite.groupcollide(detectors_group, current_night.areas[0].arrows, 0, 0)
+            if collides:
+                for detector in collides:
+                    if detector.activated:
+                        collides[detector][0].kill()
 
         pygame.display.flip()
         screen.fill((0, 0, 0))
@@ -252,6 +298,7 @@ if __name__ == '__main__':
             screen.blit(current_night.background, (0, 0))
             current_night.draw()
             figures_sprite_group.draw(screen)
+            detectors_group.draw(screen)
 
         pygame_widgets.update(pygame.event.get())
 
