@@ -15,7 +15,7 @@ class Figure(AnimatedSprite):
         super().__init__(cadre_code, cadre_number, *group)
         self.cadres = []
         for i in range(self.cadre_number):
-            self.cadres.append(f'data/png/{cadre_code}_{i + 1}.png')
+            self.cadres.append(f'data/png/figure_{cadre_code}_{i + 1}.png')
         self.passive_update()
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
@@ -31,7 +31,7 @@ class ControlledHero(Figure):
         keys = [pygame.K_RIGHT, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN]
         for i in range(len(keys)):
             if events[keys[i]]:
-                self.image = pygame.image.load(f'data/png/{self.cadres_info[0]}_{SIDES[i]}.png')
+                self.image = pygame.image.load(f'data/png/figure_{self.cadres_info[0]}_{SIDES[i]}.png')
 
 
 class Bot(Figure):
