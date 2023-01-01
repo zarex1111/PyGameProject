@@ -14,7 +14,7 @@ class Figure(AnimatedSprite):
     def __init__(self, x, y, cadre_code, cadre_number, *group):
         super().__init__(cadre_code, cadre_number, *group)
         self.cadres = []
-        for i in range(self.cadre_number):
+        for i in range(cadre_number):
             self.cadres.append(f'data/png/figure_{cadre_code}_{i + 1}.png')
         self.passive_update()
         self.rect = self.image.get_rect()
@@ -26,8 +26,12 @@ class Figure(AnimatedSprite):
 
 
 class ControlledHero(Figure):
+
+    def __init__(self, x, y, cadre_code, cadre_number, *group):
+        super().__init__(x, y, cadre_code, cadre_number, *group)
     
     def update(self, events):
+        self.passive_update()
         keys = [pygame.K_RIGHT, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN]
         for i in range(len(keys)):
             if events[keys[i]]:
@@ -39,6 +43,9 @@ class Bot(Figure):
     def __init__(self, x, y, cadre_code, cadre_number, hardless, *group):
         super().__init__(x, y, cadre_code, cadre_number, *group)
         self.hard = hardless
+
+    def update(self, events) -> None:
+        self.passive_update()
 
 
 class Menu:
@@ -169,12 +176,14 @@ def choose_night_menu_buttons_array(screen):
 
 
 def start_night(night_number):
-    global in_menu, in_choosing_game_menu, in_game, current_night, choose_game_menu
+    global in_menu, in_choosing_game_menu, in_game, current_night, choose_game_menu, current_bot, current_hero, figures_sprite_group
 
     night_number = (night_number - 100) // 275 + 1
     in_menu, in_choosing_game_menu, in_game = False, False, True
     choose_game_menu.hide()
     current_night = Night(night_number)
+
+    hero, bot = ControlledHero(1000, 500, 1, 2, figures_sprite_group), Bot(300, 500, 2, 2, 50, figures_sprite_group)
 
 
 def open_main_menu():
@@ -220,6 +229,9 @@ if __name__ == '__main__':
     background = pygame.image.load('data/png/background.png')
 
     current_night = None
+    current_hero = None
+    current_bot = None
+    figures_sprite_group = pygame.sprite.Group()
 
     while running:
         for event in pygame.event.get():
@@ -228,6 +240,7 @@ if __name__ == '__main__':
 
         if in_game:
             current_night.update()
+            figures_sprite_group.update(pygame.key.get_pressed())
 
         pygame.display.flip()
         screen.fill((0, 0, 0))
@@ -238,6 +251,7 @@ if __name__ == '__main__':
         if in_game:
             screen.blit(current_night.background, (0, 0))
             current_night.draw()
+            figures_sprite_group.draw(screen)
 
         pygame_widgets.update(pygame.event.get())
 
