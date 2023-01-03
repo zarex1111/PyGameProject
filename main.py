@@ -101,7 +101,8 @@ class Arrow(pygame.sprite.Sprite):
 
     def __init__(self, pos_x, pos_y, row, col, scene, area_index, *group):
         super().__init__(*group)
-        self.image = pygame.image.load(Arrow.line_images[col]).convert_alpha()
+        self.image = pygame.image.load(Arrow.line_images[col])
+        self.image.set_colorkey((255, 255, 255))
         self.area_index = area_index
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
@@ -137,7 +138,6 @@ class TouchableDetector(pygame.sprite.Sprite):
     
     def update(self):
         self.deactivate()
-
 
 
 class Night:
@@ -220,7 +220,8 @@ def start_night(night_number):
     hero, bot = ControlledHero(1000, 500, 1, 2, figures_sprite_group), Bot(300, 500, 2, 2, 50, figures_sprite_group)
 
     for i in range(8):
-        x = 100 + (i % 4) * 125 + (i > 3) * 500
+        x = 100 + (i % 4) * 125 + int(i > 3) * 500
+        print(x)
         TouchableDetector((x, 50), detectors_group)
 
 
