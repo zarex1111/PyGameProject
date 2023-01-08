@@ -2,6 +2,52 @@ import pygame
 from settings import *
 from pygame_widgets.button import Button
 import pygame_widgets
+from random import random
+
+
+class AnimatedSprite(pygame.sprite.Sprite):
+    def __init__(self, cadres_code, cadres_number, *group):
+        super().__init__(*group)
+        self.cadres_info = (cadres_code, cadres_number)
+
+class Figure(AnimatedSprite):
+
+    def __init__(self, x, y, cadre_code, cadre_number, *group):
+        super().__init__(cadre_code, cadre_number, *group)
+        self.cadres = []
+        for i in range(cadre_number):
+            self.cadres.append(f'data/png/figure_{cadre_code}_{i + 1}.png')
+        self.passive_update()
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+
+    def passive_update(self):
+        self.cadres = [self.cadres[-1]] + self.cadres[1:]
+        self.image = pygame.image.load(self.cadres[0])
+
+
+class ControlledHero(Figure):
+
+    def __init__(self, x, y, cadre_code, cadre_number, *group):
+        super().__init__(x, y, cadre_code, cadre_number, *group)
+    
+    def update(self, events):
+        self.passive_update()
+        keys = [pygame.K_RIGHT, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN]
+        for i in range(len(keys)):
+            if events[keys[i]]:
+                self.image = pygame.image.load(f'data/png/figure_{self.cadres_info[0]}_{SIDES[i]}.png')
+                detectors_group.sprites()[i + 4].activate()
+
+
+class Bot(Figure):
+    
+    def __init__(self, x, y, cadre_code, cadre_number, hardless, *group):
+        super().__init__(x, y, cadre_code, cadre_number, *group)
+        self.hard = hardless
+
+    def update(self, events) -> None:
+        self.passive_update()
 
 
 class Menu:
@@ -25,12 +71,170 @@ class Menu:
             btn.show()
 
 
-def open_choosing_night_menu():
-    global in_menu, in_choosing_game_menu, in_game, choose_game_menu, main_menu
-    in_menu, in_choosing_game_menu, in_game = False, True, False
-    choose_game_menu.show()
-    main_menu.hide()
+class ActiveArea:
 
+    def __init__(self, first_scene):
+        self.current_scene = first_scene
+        self.width, self.height = ACTIVE_AREA_WIDTH, ACTIVE_AREA_HEIGHT
+
+    def __add__(self, scene):
+        self.current_scene = self.current_scene[4:] + scene
+        return self
+
+    def update(self):
+        self.arrows = pygame.sprite.Group()
+        for i in range(len(self.current_scene)):
+            if self.current_scene[i] == '1':
+                row, col = i // 4, i % 4
+                x = row * 32
+                y = 100 + col * 125 + current_night.areas.index(self) * 900 - 30
+                Arrow(y, x, row, col, self.current_scene, current_night.areas.index(self), self.arrows)
+
+    def draw(self):
+        self.arrows.draw(screen)
+
+
+class Arrow(pygame.sprite.Sprite):
+    images = ('data/png/right_arrow.png', 'data/png/up_arrow.png',
+        'data/png/left_arrow.png', 'data/png/down_arrow.png')
+    line_images = ('data/png/right_arrow_line.png', 'data/png/up_arrow_line.png',
+        'data/png/left_arrow_line.png', 'data/png/down_arrow_line.png')
+
+    def __init__(self, pos_x, pos_y, row, col, scene, area_index, *group):
+        super().__init__(*group)
+        self.image = pygame.image.load(Arrow.line_images[col])
+        self.image.set_colorkey((255, 255, 255))
+        self.area_index = area_index
+        self.rect = self.image.get_rect()
+        self.rect.x = pos_x
+        self.rect.y = pos_y
+
+
+class TouchableDetector(pygame.sprite.Sprite):
+
+    activated_image = pygame.image.load('data/png/detector_activated.png')
+    deactivated_image = pygame.image.load('data/png/detector_deactivated.png')
+    got_arrow_image = pygame.image.load('data/png/detector_got_arrow.png')
+
+    def __init__(self, position, *groups):
+        super().__init__(*groups)
+        self.activated = False
+        self.position = position
+
+        self.update_rect()
+
+    def activate(self):
+        self.activated = True
+        self.update_rect()
+
+    def deactivate(self):
+        self.activated = False
+        self.update_rect()
+
+    def update_rect(self):
+        self.image = TouchableDetector.deactivated_image
+        if self.activated:
+            self.image = TouchableDetector.activated_image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.position
+
+    def set_arrow_got_image(self):
+        self.image = TouchableDetector.got_arrow_image
+        self.update_rect()
+    
+    def update(self):
+        self.deactivate()
+
+
+class Night:
+
+    def __init__(self, night_number):
+
+        self.night_number = night_number
+
+        self.should_show_dialogs = True
+        self.dialogs = DIALOGS[night_number - 1]
+        print(self.dialogs)
+        self.dialogs_group = pygame.sprite.Group()
+
+        self.background = pygame.image.load(f'data/png/night_{self.night_number}.png')
+
+    def _read_full_scene(self):
+
+        scene1, scene2 = '', ''
+        for i in range(ACTIVE_ROWS):
+            scene1, scene2 = self.add_one_row(scene1, scene2)
+        return(scene1, scene2)
+        
+    def add_one_row(self, scene1, scene2):
+        scene1 += self.txt_file.read(4)
+        scene2 += self.txt_file.read(4)
+        return (scene1, scene2)
+    
+    def update(self):
+        if not self.should_show_dialogs:
+            scenes = self.add_one_row('', '')
+            self.areas = [self.areas[0] + scenes[0], self.areas[1] + scenes[1]]
+            for area in self.areas:
+                area.update()
+        elif len(self.dialogs) == 0:
+            self.start_music()
+            self.should_show_dialogs = False
+        else:
+            if self.dialogs_group.empty():
+                side, text = self.dialogs.pop(0)
+                DialogWindow(side, text, self.dialogs_group)
+            self.dialogs_group.update()
+
+    def draw(self):
+        if not self.should_show_dialogs:
+            for area in self.areas:
+                area.draw()
+        else:
+            if self.dialogs_group.empty() and len(self.dialogs != 0):
+                side, text = self.dialogs.pop(0)
+                DialogWindow(side, text, self.dialogs_group)
+            self.dialogs_group.draw(screen)
+            if len(self.dialogs_group.sprites()) != 0:
+                self.dialogs_group.sprites()[0].write()
+
+    def start_music(self):
+        self.night_number = self.night_number
+        self.sound = NIGHT_CODES[self.night_number]
+        pygame.mixer.music.load(f'data/music/{self.sound}.wav')
+        pygame.mixer.music.play()
+        self.txt_file = open(f'data/txt/{self.sound}.txt')
+
+        first_scenes = self._read_full_scene()
+        self.areas = [ActiveArea(first_scenes[0]), ActiveArea(first_scenes[1])]
+
+
+class DialogWindow(pygame.sprite.Sprite):
+    image = pygame.image.load('data/png/dialog_background.png')
+
+    def __init__(self, side, text, *group):
+        super().__init__(*group)
+        self.image = DialogWindow.image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = (side * 500, 600)
+        self.text = text
+        self.font = pygame.font.Font('Arial', 20)
+
+        self.displayed_text = ''
+    
+    def update(self, click):
+        if self.displayed_text != self.text:
+            self.displayed_text += self.text[len(self.displayed_text)]
+        if click:
+            if self.displayed_text == self.text:
+                self.kill()
+            self.displayed_text == self.text
+        else:
+            self.font.render(self.displayed_text)
+    
+    def write(self):
+        screen.blit(self.font, (self.rect.x + 10, self.rect.y + 10))
+        
 
 def menu_buttons_array(screen):
     start_game_button = Button(screen, WIDTH / 2 - 250, HEIGHT / 2 + 50, 500, 100, 0, text='Начать игру',
@@ -44,7 +248,6 @@ def reedit_godmode():
     global GODMODE
     GODMODE = not GODMODE
 
-    print(main_menu.buttons[1].text)
     if GODMODE:
         main_menu.buttons[1].setHoverColour((20, 200, 20))
     else:
@@ -57,11 +260,28 @@ def choose_night_menu_buttons_array(screen):
     for i in range(5):
         button = Button(screen, start_x + i * 275, y, 200, 300, 0, text=f'Ночь {i + 1}',
             textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 10, 200), colour=(0, 0, 0), radius=25)
+        button.setOnClick(start_night, (button.getX(),))
         array.append(button)
     button = Button(screen, WIDTH / 2 - 250, HEIGHT / 2 - 200, 500, 100, 0, text='Назад в главное меню', onClick=open_main_menu,
         textColour=(255, 255, 255), fontSize=50, hoverColour=(200, 10, 200), colour=(0, 0, 0), radius=50)
     array.append(button)
     return array
+
+
+def start_night(night_number):
+    global in_menu, in_choosing_game_menu, in_game, current_night, choose_game_menu, current_bot, current_hero, figures_sprite_group, detectors_group,\
+        hero, bot
+
+    night_number = (night_number - 100) // 275 + 1
+    in_menu, in_choosing_game_menu, in_game = False, False, True
+    choose_game_menu.hide()
+    current_night = Night(night_number)
+
+    hero, bot = ControlledHero(1000, 500, 1, 2, figures_sprite_group), Bot(300, 500, 2, 2, 50, figures_sprite_group)
+
+    for i in range(8):
+        x = 100 + (i % 4) * 125 + int(i > 3) * 900
+        TouchableDetector((x, 0), detectors_group)
 
 
 def open_main_menu():
@@ -71,9 +291,18 @@ def open_main_menu():
     main_menu.show()
 
 
+def open_choosing_night_menu():
+    global in_menu, in_choosing_game_menu, in_game, choose_game_menu, main_menu
+    in_menu, in_choosing_game_menu, in_game = False, True, False
+    choose_game_menu.show()
+    main_menu.hide()
+
+def get_chance(percents):
+    number = float(percents) / 100
+    return random() >= number
+
 
 if __name__ == '__main__':
-    print(SCREEN_SIZE)
     pygame.init()
     pygame.mouse.set_visible(False)
 
@@ -98,21 +327,55 @@ if __name__ == '__main__':
     cursor_group = pygame.sprite.Group()
     cursor = pygame.sprite.Sprite(cursor_group)
     cursor.image = pygame.image.load('data/png/arrow.png')
-    cursor.image.convert_alpha()
-    cursor.image = pygame.transform.scale(cursor.image, (50, 75))
 
     background = pygame.image.load('data/png/background.png')
+
+    current_night = None
+    current_hero = None
+    current_bot = None
+    figures_sprite_group = pygame.sprite.Group()
+    detectors_group = pygame.sprite.Group()
+    hero, bot = None, None
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+        if in_game:
+            current_night.update()
+            detectors_group.update()
+            figures_sprite_group.update(pygame.key.get_pressed())
+            
+            if not current_night.should_show_dialogs:
+                collides = pygame.sprite.groupcollide(detectors_group, current_night.areas[1].arrows, 0, 0)
+                if collides:
+                    for detector in collides:
+                        if detector.activated:
+                            collides[detector][0].kill()
+                            detector.set_arrow_got_image()
+
+                collides = pygame.sprite.groupcollide(detectors_group, current_night.areas[0].arrows, 0, 0)
+                animation_keys = set()
+                if collides:
+                    for detector in collides:
+                        detector_number = (detector.rect.x - 100) // 125 + 1
+                        if get_chance(bot.hard):
+                            detector.set_arrow_got_image()
+                            collides[detector][0].kill()
+                        
+
         pygame.display.flip()
         screen.fill((0, 0, 0))
         if in_menu or in_choosing_game_menu:
             screen.blit(background, (0, 0))
         if in_menu:
             screen.blit(logo, (WIDTH / 2 - 150, HEIGHT / 2 - 300))
+        if in_game:
+            screen.blit(current_night.background, (0, 0))
+            current_night.draw()
+            figures_sprite_group.draw(screen)
+            detectors_group.draw(screen)
 
         pygame_widgets.update(pygame.event.get())
 
